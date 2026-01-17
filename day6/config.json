@@ -1,0 +1,7 @@
+{
+    "input_folder": "input",
+    "output_folder": "output",
+    "report_folder": "report",
+    "log_folder": "logs",
+    "accepted_result": ["pass","fail"]
+}

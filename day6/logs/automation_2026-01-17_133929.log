@@ -1,0 +1,8 @@
+2026-01-17 13:39:29,701 | INFO | SYSTEM STARTED
+2026-01-17 13:39:29,702 | INFO | Found 3 csv files
+2026-01-17 13:39:29,702 | INFO | Processing file: test_data_26-01-14.csv
+2026-01-17 13:39:29,703 | INFO | Processing file: test_data_26-01-15.csv
+2026-01-17 13:39:29,717 | INFO | Processing file: test_data_26-01-16.csv
+2026-01-17 13:39:29,720 | INFO | SYSTEM FINISHED
+2026-01-17 13:39:29,721 | INFO | TOTAL=18 Pass=12 Fail=6
+2026-01-17 13:39:29,721 | INFO | Report: report\master_report_20260117_133929.csv

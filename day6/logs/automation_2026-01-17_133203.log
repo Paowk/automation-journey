@@ -1,0 +1,3 @@
+2026-01-17 13:32:03,937 | INFO | SYSTEM STARTED
+2026-01-17 13:32:03,939 | CRITICAL | Cannot access in put folder
+2026-01-17 13:32:03,940 | CRITICAL | object of type '_io.TextIOWrapper' has no len()
