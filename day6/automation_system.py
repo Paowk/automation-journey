@@ -3,14 +3,24 @@ import os
 import json
 import logging
 import shutil
-from datetime import datetime
+import argparse
 import sys
+from datetime import datetime
+
+# ---------------- CLI ----------------
+parser = argparse.ArgumentParser(description="Automation Batch Test System")
+
+parser.add_argument("--input", help="Input folder")
+parser.add_argument("--strict", action="store_true", help="Stop system when any bad file is found")
+parser.add_argument("--summary", choices=["csv", "txt"], default="csv", help="Summary format")
+
+args = parser.parse_args()
 
 # -------- load config ---------
 with open("config.json", "r", encoding="utf-8") as file:
     config = json.load(file)
 
-INPUT_FOLDER = config["input_folder"]
+INPUT_FOLDER = args.input if args.input else config["input_folder"]
 OUTPUT_FOLDER = config["output_folder"]
 REPORT_FOLDER = config["report_folder"]
 LOG_FOLDER = config["log_folder"]
@@ -18,13 +28,14 @@ ACCEPTED = config["accepted_result"]
 PROCESSED_FOLDER = config["processed_folder"]
 BAD_FOLDER = config["bad_folder"]
 
-os.makedirs(PROCESSED_FOLDER, exist_ok=True)
-os.makedirs(BAD_FOLDER, exist_ok=True)
-os.makedirs(LOG_FOLDER, exist_ok=True)
-os.makedirs(OUTPUT_FOLDER, exist_ok=True)
-os.makedirs(REPORT_FOLDER, exist_ok=True)
+STRICT_MODE = args.strict
+SUMMARY_FORMAT = args.summary
 
-# --------- setup logging -----------
+# -------- folder setup --------
+for folder in [OUTPUT_FOLDER, REPORT_FOLDER, LOG_FOLDER, PROCESSED_FOLDER, BAD_FOLDER]:
+    os.makedirs(folder, exist_ok=True)
+
+# --------- logging -----------
 log_file = os.path.join(
     LOG_FOLDER, f"automation_{datetime.now().strftime('%Y-%m-%d_%H%M%S')}.log"
 )
@@ -39,6 +50,7 @@ logging.basicConfig(
 )
 
 logging.info("SYSTEM STARTED")
+logging.info(f"INPUT={INPUT_FOLDER} STRICT={STRICT_MODE} SUMMARY={SUMMARY_FORMAT}")
 
 # --------- system status ----------
 system_failed = False
@@ -101,6 +113,10 @@ for file_name in files:
         shutil.move(input_path, os.path.join(BAD_FOLDER, file_name))
         bad_files.append(file_name)
         system_failed = True
+
+        if STRICT_MODE:
+            logging.critical("STRICT MODE ACTIVE - SYSTEM STOPPED")
+            sys.exit(2)
         continue
 
     # -------- write output --------
@@ -114,6 +130,10 @@ for file_name in files:
         shutil.move(input_path, os.path.join(BAD_FOLDER, file_name))
         bad_files.append(file_name)
         system_failed = True
+
+        if STRICT_MODE:
+            logging.critical("STRICT MODE ACTIVE - SYSTEM STOPPED")
+            sys.exit(2)
     else:
         shutil.move(input_path, os.path.join(PROCESSED_FOLDER, file_name))
 
@@ -124,17 +144,32 @@ for file_name in files:
     grand_fail += fail_count
 
 # -------------- master report ----------------
-report_name = f"master_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-report_path = os.path.join(REPORT_FOLDER, report_name)
+timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 
-with open(report_path, "w", newline="", encoding="utf-8") as file:
-    writer = csv.writer(file)
-    writer.writerow(["File", "Total", "Pass", "Fail"])
-    writer.writerows(summary)
-    writer.writerow([])
-    writer.writerow(["ALL", grand_total, grand_pass, grand_fail])
+if SUMMARY_FORMAT == "csv":
+    report_name = f"master_report_{timestamp}.csv"
+    report_path = os.path.join(REPORT_FOLDER, report_name)
 
-# -------------- execution summary ----------------
+    with open(report_path, "w", newline="", encoding="utf-8") as file:
+        writer = csv.writer(file)
+        writer.writerow(["File", "Total", "Pass", "Fail"])
+        writer.writerows(summary)
+        writer.writerow([])
+        writer.writerow(["ALL", grand_total, grand_pass, grand_fail])
+
+else:
+    report_name = f"master_report_{timestamp}.txt"
+    report_path = os.path.join(REPORT_FOLDER, report_name)
+
+    with open(report_path, "w", encoding="utf-8") as file:
+        file.write("MASTER REPORT\n")
+        file.write("====================\n")
+        for s in summary:
+            file.write(f"{s[0]} | Total={s[1]} Pass={s[2]} Fail={s[3]}\n")
+        file.write("\n")
+        file.write(f"ALL | Total={grand_total} Pass={grand_pass} Fail={grand_fail}\n")
+
+# -------------- run summary ----------------
 run_summary = f"""
 SYSTEM RUN SUMMARY
 -----------------------
@@ -144,6 +179,7 @@ Pass        : {grand_pass}
 Fail        : {grand_fail}
 Bad files   : {bad_files}
 Status      : {"FAILED" if system_failed else "SUCCESS"}
+Strict mode : {STRICT_MODE}
 Time        : {datetime.now()}
 """
 
