@@ -3,5 +3,7 @@
     "output_folder": "output",
     "report_folder": "report",
     "log_folder": "logs",
-    "accepted_result": ["pass","fail"]
+    "accepted_result": ["pass","fail"],
+    "processed_folder": "processed",
+    "bad_folder": "bad_files"
 }

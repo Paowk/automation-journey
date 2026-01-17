@@ -1,0 +1,15 @@
+# runtime folders
+logs/
+report/
+output/
+processed/
+bad_files/
+input/
+
+# runtime files
+*.log
+*.csv
+*.txt
+
+# python cache
+__pycache__/
